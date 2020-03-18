@@ -3,6 +3,7 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Dolittle.Applications;
 using Dolittle.Runtime.Events.Store;
 
 namespace Dolittle.Runtime.Events.Streams
@@ -18,8 +19,9 @@ namespace Dolittle.Runtime.Events.Streams
         /// <param name="event">The <see cref="CommittedEvent" />.</param>
         /// <param name="streamId">The <see cref="StreamId" />.</param>
         /// <param name="partitionId">The <see cref="PartitionId" />.</param>
+        /// <param name="microservice">The <see cref="Microservice" />.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken" />.</param>
         /// <returns>A <see cref="Task"/> representing whether the event was successfully written to the event store.</returns>
-        Task Write(CommittedEvent @event, StreamId streamId, PartitionId partitionId, CancellationToken cancellationToken = default);
+        Task Write(CommittedEvent @event, StreamId streamId, PartitionId partitionId, Microservice microservice, CancellationToken cancellationToken = default);
     }
 }

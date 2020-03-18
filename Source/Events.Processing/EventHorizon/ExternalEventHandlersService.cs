@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using contracts::Dolittle.Runtime.Events.Processing;
+using Dolittle.Applications;
 using Dolittle.Artifacts;
 using Dolittle.Collections;
 using Dolittle.DependencyInversion;
@@ -20,14 +21,14 @@ using Dolittle.Runtime.Events.Streams;
 using Dolittle.Runtime.Tenancy;
 using Dolittle.Services;
 using Grpc.Core;
-using static contracts::Dolittle.Runtime.Events.Processing.EventHandlers;
+using static contracts::Dolittle.Runtime.Events.Processing.ExternalEventHandlers;
 
-namespace Dolittle.Runtime.Events.Processing
+namespace Dolittle.Runtime.Events.Processing.EventHorizon
 {
     /// <summary>
-    /// Represents the implementation of <see cref="EventHandlersBase"/>.
+    /// Represents the implementation of <see cref="ExternalEventHandlersBase"/>.
     /// </summary>
-    public class EventHandlersService : EventHandlersBase
+    public class ExternalEventHandlersService : ExternalEventHandlersBase
     {
         readonly IExecutionContextManager _executionContextManager;
         readonly ITenants _tenants;
@@ -39,7 +40,7 @@ namespace Dolittle.Runtime.Events.Processing
         readonly ILogger _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventHandlersService"/> class.
+        /// Initializes a new instance of the <see cref="ExternalEventHandlersService"/> class.
         /// </summary>
         /// <param name="executionContextManager"><see cref="IExecutionContextManager"/> for current <see cref="Execution.ExecutionContext"/>.</param>
         /// <param name="tenants">The <see cref="ITenants"/> system.</param>
@@ -49,7 +50,7 @@ namespace Dolittle.Runtime.Events.Processing
         /// <param name="eventsFromStreamsFetcherFactory"><see cref="FactoryFor{T}"/> the  <see cref="IFetchEventsFromStreams">fetcher</see> for writing events.</param>
         /// <param name="reverseCallDispatchers">The <see cref="IReverseCallDispatchers"/> for working with reverse calls.</param>
         /// <param name="logger"><see cref="ILogger"/> for logging.</param>
-        public EventHandlersService(
+        public ExternalEventHandlersService(
             IExecutionContextManager executionContextManager,
             ITenants tenants,
             FactoryFor<IFilterRegistry> getFilters,
@@ -71,21 +72,23 @@ namespace Dolittle.Runtime.Events.Processing
 
         /// <inheritdoc/>
         public override async Task Connect(
-            IAsyncStreamReader<EventHandlerClientToRuntimeResponse> runtimeStream,
-            IServerStreamWriter<EventHandlerRuntimeToClientRequest> clientStream,
+            IAsyncStreamReader<ExternalEventHandlerClientToRuntimeResponse> runtimeStream,
+            IServerStreamWriter<ExternalEventHandlerRuntimeToClientRequest> clientStream,
             ServerCallContext context)
         {
             EventProcessorId eventProcessorId = Guid.Empty;
             var sourceStream = StreamId.AllStreamId;
+            Microservice sourceMicroservice = Guid.Empty;
 
             try
             {
-                var eventHandlerArguments = context.GetArgumentsMessage<EventHandlerArguments>();
+                var eventHandlerArguments = context.GetArgumentsMessage<ExternalEventHandlerArguments>();
                 eventProcessorId = eventHandlerArguments.EventHandler.To<EventProcessorId>();
-                _logger.Debug($"EventHandler client connected with id '{eventProcessorId}' for stream '{sourceStream}'");
+                sourceMicroservice = eventHandlerArguments.Microservice.To<Microservice>();
+                _logger.Debug($"ExternalEventHandler client connected with id '{eventProcessorId}' for stream '{sourceStream}' on microservice '{sourceMicroservice}'");
                 var targetStream = new StreamId { Value = eventProcessorId };
-
                 ThrowIfIllegalTargetStream(targetStream);
+                ThrowIfIllegalMicroservice(sourceMicroservice);
 
                 var dispatcher = _reverseCallDispatchers.GetDispatcherFor(
                     runtimeStream,
@@ -98,7 +101,7 @@ namespace Dolittle.Runtime.Events.Processing
                     targetStream,
                     eventHandlerArguments.Types_.Select(_ => _.Id.To<ArtifactId>()),
                     eventHandlerArguments.Partitioned);
-                await RegisterForAllTenants(filterDefinition, dispatcher, eventProcessorId, sourceStream, targetStream, context.CancellationToken).ConfigureAwait(false);
+                await RegisterForAllTenants(filterDefinition, dispatcher, eventProcessorId, sourceStream, targetStream, sourceMicroservice, context.CancellationToken).ConfigureAwait(false);
                 await dispatcher.WaitTillDisconnected().ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -117,10 +120,11 @@ namespace Dolittle.Runtime.Events.Processing
 
         async Task RegisterForAllTenants(
             TypeFilterWithEventSourcePartitionDefinition filterDefinition,
-            IReverseCallDispatcher<EventHandlerClientToRuntimeResponse, EventHandlerRuntimeToClientRequest> callDispatcher,
+            IReverseCallDispatcher<ExternalEventHandlerClientToRuntimeResponse, ExternalEventHandlerRuntimeToClientRequest> callDispatcher,
             EventProcessorId eventProcessorId,
             StreamId sourceStreamId,
             StreamId targetStreamId,
+            Microservice sourceMicroservice,
             CancellationToken cancellationToken)
         {
             _logger.Debug($"Registering event handler '{eventProcessorId}' for stream '{sourceStreamId}' for {_tenants.All.Count()} tenants - types : '{string.Join(",", filterDefinition.Types)}'");
@@ -130,7 +134,7 @@ namespace Dolittle.Runtime.Events.Processing
                 {
                     _executionContextManager.CurrentFor(tenant);
                     var filter = new TypeFilterWithEventSourcePartition(
-                                        Guid.Empty,
+                                        sourceMicroservice,
                                         filterDefinition,
                                         _eventsToStreamsWriterFactory(),
                                         _logger);
@@ -138,7 +142,7 @@ namespace Dolittle.Runtime.Events.Processing
 
                     _streamProcessorsFactory().Register(filter, _eventsFromStreamsFetcherFactory(), sourceStreamId, Guid.Empty);
 
-                    var eventProcessor = new EventProcessor(
+                    var eventProcessor = new ExternalEventProcessor(
                         eventProcessorId,
                         callDispatcher,
                         _executionContextManager,
@@ -169,6 +173,11 @@ namespace Dolittle.Runtime.Events.Processing
         void ThrowIfIllegalTargetStream(StreamId stream)
         {
             if (stream.IsNonWriteable) throw new CannotFilterToNonWriteableStream(stream);
+        }
+
+        void ThrowIfIllegalMicroservice(Microservice microservice)
+        {
+            if (microservice.Equals(Guid.Empty)) throw new InvalidMicroserviceForExternalEvents(microservice);
         }
     }
 }

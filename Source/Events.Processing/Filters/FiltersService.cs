@@ -74,15 +74,14 @@ namespace Dolittle.Runtime.Events.Processing.Filters
             ServerCallContext context)
         {
             EventProcessorId eventProcessorId = Guid.Empty;
-            StreamId streamId = Guid.Empty;
+            var sourceStream = StreamId.AllStreamId;
             try
             {
                 var filterArguments = context.GetArgumentsMessage<FilterArguments>();
 
                 eventProcessorId = filterArguments.Filter.To<EventProcessorId>();
-                streamId = filterArguments.Stream.To<StreamId>();
-                ThrowIfIllegalTargetStream(streamId);
-                _logger.Debug($"Filter client connected - '{eventProcessorId}' - '{streamId}' - Method: {context.Method}");
+                ThrowIfIllegalTargetStream(sourceStream);
+                _logger.Debug($"Filter client connected - '{eventProcessorId}' - '{sourceStream}' - Method: {context.Method}");
 
                 var dispatcher = _reverseCallDispatchers.GetDispatcherFor(
                     runtimeStream,
@@ -91,7 +90,7 @@ namespace Dolittle.Runtime.Events.Processing.Filters
                     _ => _.CallNumber,
                     _ => _.CallNumber);
 
-                await RegisterForAllTenants(dispatcher, eventProcessorId, streamId, context.CancellationToken).ConfigureAwait(false);
+                await RegisterForAllTenants(dispatcher, eventProcessorId, sourceStream, context.CancellationToken).ConfigureAwait(false);
 
                 await dispatcher.WaitTillDisconnected().ConfigureAwait(false);
             }
@@ -104,7 +103,7 @@ namespace Dolittle.Runtime.Events.Processing.Filters
             }
             finally
             {
-                UnregisterForAllTenants(eventProcessorId, streamId);
+                UnregisterForAllTenants(eventProcessorId, sourceStream);
                 _logger.Debug($"Filter client disconnected - '{eventProcessorId}'");
             }
         }
@@ -123,6 +122,7 @@ namespace Dolittle.Runtime.Events.Processing.Filters
                 {
                     _executionContextManager.CurrentFor(tenant);
                     var filter = new FilterProcessor(
+                        Guid.Empty,
                         new RemoteFilterDefinition(streamId, eventProcessorId.Value),
                         callDispatcher,
                         _eventsToStreamsWriterFactory(),
@@ -130,7 +130,7 @@ namespace Dolittle.Runtime.Events.Processing.Filters
                         _logger);
 
                     await _filterRegistryFactory().Register(filter, cancellationToken).ConfigureAwait(false);
-                    _streamProcessorsFactory().Register(filter, _eventsFromStreamsFetcherFactory(), streamId);
+                    _streamProcessorsFactory().Register(filter, _eventsFromStreamsFetcherFactory(), streamId, Guid.Empty);
                 }
                 catch (IllegalFilterTransformation ex)
                 {
@@ -147,7 +147,7 @@ namespace Dolittle.Runtime.Events.Processing.Filters
             {
                 _executionContextManager.CurrentFor(tenant);
                 _filterRegistryFactory().Unregister(eventProcessorId.Value);
-                _streamProcessorsFactory().Unregister(eventProcessorId, streamId);
+                _streamProcessorsFactory().Unregister(eventProcessorId, streamId, Guid.Empty);
             });
         }
 

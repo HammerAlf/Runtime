@@ -3,6 +3,7 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Dolittle.Applications;
 using Dolittle.Runtime.Events.Store;
 using Dolittle.Runtime.Events.Streams;
 
@@ -15,6 +16,11 @@ namespace Dolittle.Runtime.Events.Processing.Filters
     public interface IFilterProcessor<TDefinition> : IEventProcessor
         where TDefinition : IFilterDefinition
     {
+        /// <summary>
+        /// Gets the source <see cref="Microservice" />.
+        /// </summary>
+        Microservice SourceMicroservice { get; }
+
         /// <summary>
         /// Gets the <see cref="IFilterDefinition" /> for this filter.
         /// </summary>

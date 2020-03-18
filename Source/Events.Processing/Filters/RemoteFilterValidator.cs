@@ -45,10 +45,11 @@ namespace Dolittle.Runtime.Events.Processing.Filters
             if (lastProcessedEventLogEvent == null) return;
             var artifactsFromStream = await _eventTypesFromStreams.FetchTypesInRange(
                 filter.Definition.TargetStream,
+                filter.SourceMicroservice,
                 new StreamPositionRange(StreamPosition.Start, uint.MaxValue),
                 cancellationToken).ConfigureAwait(false);
 
-            var committedEvents = await _eventsFromStreams.FetchRange(filter.Definition.SourceStream, new StreamPositionRange(StreamPosition.Start, lastProcessedEventLogEvent.Value), cancellationToken).ConfigureAwait(false);
+            var committedEvents = await _eventsFromStreams.FetchRange(filter.Definition.SourceStream, filter.SourceMicroservice, new StreamPositionRange(StreamPosition.Start, lastProcessedEventLogEvent.Value), cancellationToken).ConfigureAwait(false);
             var artifactsFromEventLog = new List<Artifact>();
             foreach (var @event in committedEvents.Select(_ => _.Event))
             {

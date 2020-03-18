@@ -43,7 +43,7 @@ namespace Dolittle.Runtime.Events.Processing.Streams
         /// <inheritdoc />
         public override string ToString()
         {
-            return $"{EventProcessorId} - {SourceStreamId}";
+            return $"{EventProcessorId} - {SourceStreamId} - {SourceMicroservice}";
         }
     }
 }

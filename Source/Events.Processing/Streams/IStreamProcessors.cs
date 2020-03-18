@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Threading;
+using Dolittle.Applications;
 using Dolittle.Runtime.Events.Streams;
 
 namespace Dolittle.Runtime.Events.Processing.Streams
@@ -23,16 +24,18 @@ namespace Dolittle.Runtime.Events.Processing.Streams
         /// </summary>
         /// <param name="eventProcessor">The <see cref="IEventProcessor" />.</param>
         /// <param name="eventsFromStreamsFetcher">The <see cref="IFetchEventsFromStreams" />.</param>
-        /// <param name="sourceStreamId">The <see cref="StreamId" />.</param>
+        /// <param name="sourceStreamId">The source <see cref="StreamId" />.</param>
+        /// <param name="sourceMicroservice">The source <see cref="Microservice" />.</param>
         /// <param name="cancellationTokenSource">The <see cref="CancellationTokenSource" />.</param>
         /// <returns>The <see cref="StreamProcessor"/> that was registered.</returns>
-        StreamProcessor Register(IEventProcessor eventProcessor, IFetchEventsFromStreams eventsFromStreamsFetcher, StreamId sourceStreamId, CancellationTokenSource cancellationTokenSource = default);
+        StreamProcessor Register(IEventProcessor eventProcessor, IFetchEventsFromStreams eventsFromStreamsFetcher, StreamId sourceStreamId, Microservice sourceMicroservice, CancellationTokenSource cancellationTokenSource = default);
 
         /// <summary>
         /// Unregister a <see cref="IEventProcessor"/> from stream processing.
         /// </summary>
         /// <param name="eventProcessorId">The <see cref="EventProcessorId" /> of the event processor.</param>
         /// <param name="sourceStreamId">The <see cref="StreamId" />.</param>
-        void Unregister(EventProcessorId eventProcessorId, StreamId sourceStreamId);
+        /// <param name="sourceMicroservice">The source <see cref="Microservice" />.</param>
+        void Unregister(EventProcessorId eventProcessorId, StreamId sourceStreamId, Microservice sourceMicroservice);
     }
 }

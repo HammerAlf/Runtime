@@ -3,6 +3,7 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Dolittle.Applications;
 using Dolittle.DependencyInversion;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.Store;
@@ -24,19 +25,25 @@ namespace Dolittle.Runtime.Events.Processing.Filters
         /// <summary>
         /// Initializes a new instance of the <see cref="AbstractFilterProcessor{T}"/> class.
         /// </summary>
+        /// <param name="sourceMicroservice">The source <see cref="Microservice" />.</param>
         /// <param name="filterDefinition">The <see typeparam="TDefinition"/> <see cref="IFilterDefinition" /> for the filter processor.</param>
         /// <param name="eventsToStreamsWriter">The <see cref="FactoryFor{IWriteEventsToStreams}" />.</param>
         /// <param name="logger"><see cref="ILogger" />.</param>
         protected AbstractFilterProcessor(
+            Microservice sourceMicroservice,
             TDefinition filterDefinition,
             IWriteEventsToStreams eventsToStreamsWriter,
             ILogger logger)
         {
+            SourceMicroservice = sourceMicroservice;
             Definition = filterDefinition;
             _eventsToStreamsWriter = eventsToStreamsWriter;
             _logger = logger;
             _logMessagePrefix = $"Filter Processor '{Identifier}' with source stream '{Definition.SourceStream}'";
         }
+
+        /// <inheritdoc/>
+        public Microservice SourceMicroservice { get; }
 
         /// <inheritdoc/>
         public TDefinition Definition { get; }
@@ -57,7 +64,7 @@ namespace Dolittle.Runtime.Events.Processing.Filters
             if (result.Succeeded && result.IsIncluded)
             {
                 _logger.Debug($"{_logMessagePrefix} writing event '{@event.Type.Id}' to stream '{Definition.TargetStream}' in partition '{partitionId}'");
-                await _eventsToStreamsWriter.Write(@event, Definition.TargetStream, result.Partition, cancellationToken).ConfigureAwait(false);
+                await _eventsToStreamsWriter.Write(@event, Definition.TargetStream, result.Partition, SourceMicroservice, cancellationToken).ConfigureAwait(false);
             }
 
             return result;

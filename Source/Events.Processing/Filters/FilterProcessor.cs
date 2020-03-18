@@ -6,6 +6,7 @@ extern alias contracts;
 using System.Threading;
 using System.Threading.Tasks;
 using contracts::Dolittle.Runtime.Events.Processing;
+using Dolittle.Applications;
 using Dolittle.Execution;
 using Dolittle.Logging;
 using Dolittle.Protobuf;
@@ -28,18 +29,20 @@ namespace Dolittle.Runtime.Events.Processing.Filters
         /// <summary>
         /// Initializes a new instance of the <see cref="FilterProcessor"/> class.
         /// </summary>
+        /// <param name="sourceMicroservice">The source <see cref="Microservice" />.</param>
         /// <param name="definition">The <see cref="RemoteFilterDefinition"/>.</param>
         /// <param name="callDispatcher"><see cref="IReverseCallDispatcher{TResponse, TRequest}"/> for server requests.</param>
         /// <param name="eventsToStreamsWriter">The <see cref="IWriteEventsToStreams">writer</see> for writing events.</param>
         /// <param name="executionContextManager"><see cref="IExecutionContextManager"/> for current <see cref="Execution.ExecutionContext"/>.</param>
         /// <param name="logger"><see cref="ILogger"/> for logging.</param>
         public FilterProcessor(
+            Microservice sourceMicroservice,
             RemoteFilterDefinition definition,
             IReverseCallDispatcher<FilterClientToRuntimeResponse, FilterRuntimeToClientRequest> callDispatcher,
             IWriteEventsToStreams eventsToStreamsWriter,
             IExecutionContextManager executionContextManager,
             ILogger logger)
-            : base(definition, eventsToStreamsWriter, logger)
+            : base(sourceMicroservice, definition, eventsToStreamsWriter, logger)
         {
             _callDispatcher = callDispatcher;
             _executionContextManager = executionContextManager;

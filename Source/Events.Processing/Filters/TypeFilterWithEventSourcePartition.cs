@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Dolittle.Applications;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.Store;
 using Dolittle.Runtime.Events.Streams;
@@ -23,14 +24,16 @@ namespace Dolittle.Runtime.Events.Processing.Filters
         /// <summary>
         /// Initializes a new instance of the <see cref="TypeFilterWithEventSourcePartition"/> class.
         /// </summary>
+        /// <param name="sourceMicroservice">The source <see cref="Microservice" />.</param>
         /// <param name="definition">The<see cref="TypeFilterWithEventSourcePartitionDefinition"/>.</param>
         /// <param name="eventsToStreamsWriter">The <see cref="IWriteEventsToStreams">writer</see> for writing events.</param>
         /// <param name="logger"><see cref="ILogger"/> for logging.</param>
         public TypeFilterWithEventSourcePartition(
+            Microservice sourceMicroservice,
             TypeFilterWithEventSourcePartitionDefinition definition,
             IWriteEventsToStreams eventsToStreamsWriter,
             ILogger logger)
-            : base(definition, eventsToStreamsWriter, logger)
+            : base(sourceMicroservice, definition, eventsToStreamsWriter, logger)
         {
             _logger = logger;
         }
