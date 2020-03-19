@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using contracts::Dolittle.Runtime.EventHorizon;
+using Dolittle.Applications;
 using Dolittle.Logging;
 using Dolittle.Runtime.Events.Streams;
 using Grpc.Core;
@@ -43,7 +44,7 @@ namespace Dolittle.Runtime.EventHorizon.Consumer
         }
 
         /// <inheritdoc/>
-        public async Task<StreamEvent> Fetch(StreamId streamId, StreamPosition streamPosition, CancellationToken cancellationToken)
+        public async Task<StreamEvent> Fetch(StreamId streamId, Microservice microservice, StreamPosition streamPosition, CancellationToken cancellationToken)
         {
             try
             {
@@ -63,13 +64,13 @@ namespace Dolittle.Runtime.EventHorizon.Consumer
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<StreamEvent>> FetchRange(StreamId streamId, StreamPositionRange range, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<StreamEvent>> FetchRange(StreamId streamId, Microservice microservice, StreamPositionRange range, CancellationToken cancellationToken = default)
         {
             throw new CannotFetchRangeOfEventsFromEventHorizon();
         }
 
         /// <inheritdoc/>
-        public Task<StreamPosition> FindNext(StreamId streamId, PartitionId partitionId, StreamPosition fromPosition, CancellationToken cancellationToken = default)
+        public Task<StreamPosition> FindNext(StreamId streamId, PartitionId partitionId, Microservice microservice, StreamPosition fromPosition, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<StreamPosition>(uint.MaxValue);
         }

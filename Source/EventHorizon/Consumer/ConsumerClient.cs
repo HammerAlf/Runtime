@@ -75,7 +75,7 @@ namespace Dolittle.Runtime.EventHorizon.Consumer
         {
             while (true)
             {
-                var streamProcessorId = new StreamProcessorId(eventHorizon.ProducerTenant.Value, eventHorizon.ProducerMicroservice.Value);
+                var streamProcessorId = new StreamProcessorId(eventHorizon.ProducerTenant.Value, eventHorizon.ProducerMicroservice.Value, Guid.Empty);
                 _logger.Debug($"Tenant '{eventHorizon.ConsumerTenant}' is subscribing to events from tenant '{eventHorizon.ProducerTenant} in microservice '{eventHorizon.ProducerMicroservice}' on '{microserviceAddress.Host}:{microserviceAddress.Port}'");
                 try
                 {
@@ -104,6 +104,7 @@ namespace Dolittle.Runtime.EventHorizon.Consumer
                         new EventHorizonEventProcessor(eventHorizon, _getReceivedEventsWriter(), _logger),
                         eventsFetcher,
                         eventHorizon.ProducerMicroservice.Value,
+                        Guid.Empty,
                         tokenSource);
 #pragma warning restore CA2000
 
@@ -120,7 +121,7 @@ namespace Dolittle.Runtime.EventHorizon.Consumer
                 {
                     _logger.Debug($"Disconnecting Event Horizon from tenant '{eventHorizon.ConsumerTenant}' to microservice '{eventHorizon.ProducerMicroservice}' and tenant '{eventHorizon.ProducerTenant}'");
                     _executionContextManager.CurrentFor(eventHorizon.ConsumerTenant);
-                    _getStreamProcessors().Unregister(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId);
+                    _getStreamProcessors().Unregister(streamProcessorId.EventProcessorId, streamProcessorId.SourceStreamId, Guid.Empty);
                 }
 
                 await Task.Delay(5000).ConfigureAwait(false);

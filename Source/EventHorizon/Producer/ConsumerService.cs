@@ -98,7 +98,7 @@ namespace Dolittle.Runtime.EventHorizon.Producer
                             eventHorizon.ProducerMicroservice,
                             eventHorizon.ProducerTenant,
                             _executionContextManager.Current.CorrelationId);
-                        var streamEvent = await _getEventsFromStreamsFetcher().Fetch(StreamId.PublicEventsId, publicEventsPosition, context.CancellationToken).ConfigureAwait(false);
+                        var streamEvent = await _getEventsFromStreamsFetcher().Fetch(StreamId.PublicEventsId, Guid.Empty, publicEventsPosition, context.CancellationToken).ConfigureAwait(false);
                         var eventHorizonEvent = new EventHorizonEvent
                         {
                             ConsumerMicroservice = eventHorizon.ConsumerMicroservice.ToProtobuf(),

@@ -1,6 +1,7 @@
 // Copyright (c) Dolittle. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using Dolittle.Booting;
 using Dolittle.Collections;
 using Dolittle.DependencyInversion;
@@ -74,7 +75,7 @@ namespace Dolittle.Runtime.EventHorizon
         {
             _logger.Debug($"Registering stream processor for the public event stream for tenant {tenant}");
             var filter = new PublicEventFilter(_getStreamWriter(), _logger);
-            _getStreamProcessors().Register(filter, _getStreamFetcher(), StreamId.AllStreamId);
+            _getStreamProcessors().Register(filter, _getStreamFetcher(), StreamId.AllStreamId, Guid.Empty);
         }
     }
 }
