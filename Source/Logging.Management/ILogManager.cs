@@ -1,6 +1,6 @@
 // Copyright (c) Dolittle. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
+#if false
 using System.Collections.ObjectModel;
 using Dolittle.Logging.Json;
 
@@ -23,3 +23,4 @@ namespace Dolittle.Runtime.Logging.Management
         void Write(JsonLogMessage message);
     }
 }
+#endif

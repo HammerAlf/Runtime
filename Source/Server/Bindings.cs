@@ -1,6 +1,6 @@
 // Copyright (c) Dolittle. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
+#if false
 using Dolittle.DependencyInversion;
 using Dolittle.Runtime.Logging.Management;
 
@@ -19,3 +19,4 @@ namespace Dolittle.Runtime.Server
         }
     }
 }
+#endif
